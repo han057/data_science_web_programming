@@ -2,7 +2,7 @@ import sys
 import getopt
 import json
 import requests
-import pysolr
+import re
 
 from tweepy import Stream
 from tweepy import OAuthHandler
@@ -14,7 +14,6 @@ class listener(StreamListener):
     def __init__(self, solrHost, collectionName):
         self.solrHost = solrHost
         self.collectionName = collectionName
-        self.track = track
 
     def on_data(self, data):
         tweet = json.loads(data)
@@ -47,10 +46,11 @@ def main(argv):
     collectionName = ""
     f = ""
     try:
-        opts, args = getopt.getopt(argv, "c:z:f:")
+        opts, args = getopt.getopt(argv, "c:s:f:")
     except getopt.GetoptError:
         usage()
         sys.exit(2)
+
     if len(opts) < 3:
         print("Faltan argumentos")
         usage()
@@ -68,6 +68,11 @@ def main(argv):
     csecret="[]"
     atoken="[]"
     asecret="[]"
+
+    ckey="ZYNmbbb7SmJssbFEOSyv3m8tb"
+    csecret="CL30LHpoPwsIyJ8pmhHKauzn7qEtM22G0LslOd5Apg1H0z4aTN"
+    atoken="285959375-GkbbbsZgGE5s4coVtlMk1R0ucMcHqTeyEfysOB3e"
+    asecret="LTWO6uB4ruIfv9FWqCi6P4tIQRl1C3J2UHSR31Mh292us"
 
     auth = OAuthHandler(ckey, csecret)
     auth.set_access_token(atoken, asecret)
