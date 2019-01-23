@@ -10,19 +10,19 @@ from tweepy.streaming import StreamListener
 
 
 class listener(StreamListener):
-
-    def __init__(self, zooKeeperHost, collectionName, n):
-        self.n = n
-        self.tweets = []
-        zookeeper = pysolr.ZooKeeper(zooKeeperHost)
-        self.solr = pysolr.SolrCloud(zookeeper, collectionName)
+    
+    def __init__(self, solrHost, collectionName):
+        self.solrHost = solrHost
+        self.collectionName = collectionName
+        self.track = track
 
     def on_data(self, data):
-        self.tweets.append(json.loads(data))
-        if(len(self.tweets) > self.n):
-            print("Savin {} news tweets".format(self.n))
-            self.postToSolr(self.tweets)
-            self.tweets = []        
+        tweet = json.loads(data)
+        result = re.sub(r'<\s*a[^>]*>(.*?)<\s*/\s*a>', '\g<1>', tweet["source"])
+        tweet["source_app"] = re.sub(r"(twitter\s*|for\s*)", "", result.lower())
+        d = '{"add":{ "doc":' + json.dumps(tweet) + ',"boost":1.0,"overwrite":true, "commitWithin": 1000}}'
+        url = "http://{}/api/collections/{}/update/json?f=$FQN:/**".format(self.solrHost, self.collectionName)
+        r = requests.post(url, headers={"Content-Type":"application/json"}, data=d)
         return(True)
 
     def on_status(self, status):
@@ -38,35 +38,30 @@ class listener(StreamListener):
 
 def usage():
     print("""
-        dswp.py -z [zookeeperhost:port] -c [collection name] -n [Number of tweets before send to solr] -f [words separated by spaces to filter on the stream]
+        dswp.py -s [solrhost:port] -c [collection name] -f [words separated by spaces to filter on the stream]
     """)
 
 
 def main(argv):
-    zooKeeperHost = ""
+    solrHost = ""
     collectionName = ""
-    n = 100
     f = ""
     try:
-        opts, args = getopt.getopt(argv, "c:z:n:f")
+        opts, args = getopt.getopt(argv, "c:z:f:")
     except getopt.GetoptError:
         usage()
         sys.exit(2)
-    if len(opts) < 4:
+    if len(opts) < 3:
         print("Faltan argumentos")
         usage()
         sys.exit(2)
     for opt, arg in opts:
-        if opt == '-z':
-            zooKeeperHost = arg
+        if opt == '-s':
+            solrHost = arg
         elif opt in "-c":
             collectionName = arg
-        elif opt in "-n":
-            n = arg
         elif opt in "-f":
-            f = arg
-    
-    pysolr.ZooKeeper.CLUSTER_STATE = '/collections/'+ collectionName +'/state.json'
+            f = arg   
  
     # Twitter api keys
     ckey="[]"
@@ -77,7 +72,7 @@ def main(argv):
     auth = OAuthHandler(ckey, csecret)
     auth.set_access_token(atoken, asecret)
 
-    twitterStream = Stream(auth, listener(zooKeeperHost, collectionName, n))
+    twitterStream = Stream(auth, listener(solrHost, collectionName))
     twitterStream.filter(track=[f])
 
 
