@@ -69,10 +69,10 @@ def main(argv):
     atoken="[]"
     asecret="[]"
 
-    ckey="ZYNmbbb7SmJssbFEOSyv3m8tb"
-    csecret="CL30LHpoPwsIyJ8pmhHKauzn7qEtM22G0LslOd5Apg1H0z4aTN"
-    atoken="285959375-GkbbbsZgGE5s4coVtlMk1R0ucMcHqTeyEfysOB3e"
-    asecret="LTWO6uB4ruIfv9FWqCi6P4tIQRl1C3J2UHSR31Mh292us"
+    ckey=""
+    csecret=""
+    atoken=""
+    asecret=""
 
     auth = OAuthHandler(ckey, csecret)
     auth.set_access_token(atoken, asecret)
